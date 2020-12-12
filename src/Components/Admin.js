@@ -1,175 +1,147 @@
 import React, { Component } from 'react'
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Container, Row, Col, Breadcrumb, Button, Table } from 'react-bootstrap';
 
-// // export default class Admin extends Component {
-// //     render() {
-// //         return (
-// //             <div>
-// //                 componentDidMount() {
-// //                     // Simple DELETE request with fetch
-// //                     fetch('https://google.com', { method: 'GET' })
-// //                     // .then(() => this.setState({ status: 'Delete successful' }));
-// //                 }
-// //             </div>
-// //         )
-// //     }
-// // }
-// // constructor(props) {
-// //     super(props);
-
-// //     this.state = {
-// //         // postId: null,
-// //         posts: []
-// //     };
-// // }
-
-// //     componentDidMount() {
-// //         // Simple POST request with a JSON body using fetch
-// //         const requestOptions = {
-// //             method: 'GET',
-// //             headers: { 'Content-Type': 'application/json' },
-// //             // body: JSON.stringify({ title: 'React POST Request Example' })
-// //         };
-// //         // fetch('https://jsonplaceholder.typicode.com/posts', requestOptions)
-// //         //     .then(response => response.json())
-// //         //     .then(data => this.setState({ postId: data.id }))
-// //         fetch('https://jsonplaceholder.typicode.com/posts', requestOptions)
-// //             .then(response => response.json())
-// //         // .then((value) => { console.log(value) })
-// //         // .then(this.setState({ posts: response }))
-// //         // .then(console.log(this.state.posts))
-// //         // this.setState({ posts: })
-
-// //     }
-
-// //     render() {
-// //         const { users } = this.state;
-// //         return (
-// //             // <div className="card text-center m-3">
-// //             //     <h5 className="card-header">Simple POST Request</h5>
-// //             //     <div className="card-body">
-// //             //         Returned Id: {postId}
-// //             //     </div>
-// //             // </div>
-// //             <div>
-// //                 {users}
-// //                 {/* {users.map((user, index) => (
-// //                     <div key={index}>
-// //                         <h3>{user.id}</h3>
-// //                         <p>{user.title}</p>
-// //                         <p>{user.body}</p>
-// //                     </div>
-// //                 ))} */}
-
-// //                 {users.map(user => {
-// //                     const { userId, id, title, body } = user;
-
-// //                     return (
-// //                         <div key={userId}>
-// //                             <h3>{id}</h3>
-// //                             <p>{title}</p>
-// //                             <p>{body}</p>
-// //                         </div>
-// //                     );
-// //                 })}
-
-// //             </div>
-// //         );
-// //     }
-// // }
+import '../App.css'
+import { Redirect } from 'react-router-dom';
 
 
-
-// // // function App() {
-// // //     return (
-// // //         <div className="App">
-// // //             <div className="page-deets">
-// // //                 <h2>Iterate over Array and display data</h2>
-// // //             </div>
-
-// // //             {/_ Iterate over imported array in userData _/}
-// // //             <div className="users">
-// // //                 {users.map((user, index) => (
-// // //                     <div key={index}>
-// // //                         <h3>{user.id}</h3>
-// // //                         <p>{user.title}</p>
-// // //                         <p>{user.body}</p>
-// // //                     </div>
-// // //                 ))}
-// // //             </div>
-// // //             <ScotchInfobar />
-// // //         </div>
-// // //     );
-// // // }
-
-// export default class Admin extends Component {
-
-//     fetchPosts() {
-//         // The API where we're fetching data from
-//         fetch('https://jsonplaceholder.typicode.com/posts')
-//             // We get a response and receive the data in JSON format...
-//             .then(response => response.json())
-//             // ...then we update the state of our application
-//             .then(
-//                 data =>
-//                     this.setState({
-//                         posts: data,
-//                         isLoading: false,
-//                     })
-//             )
-//             // If we catch errors instead of a response, let's update the app
-//             .catch(error => this.setState({ error, isLoading: false }));
-//     }
-
-//     componentDidMount() {
-//         this.fetchPosts();
-//     }
-//     render() {
-//         return (
-//             <div ref={this.componentDidMount}>
-//             </div>
-//         )
-//     }
-// }
-
-
-const API = 'https://hn.algolia.com/api/v1/search?query=';
-const DEFAULT_QUERY = 'redux';
+const API = 'https://fbmanagertest.herokuapp.com/api/usertoken/'
 
 export default class Admin extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            users: [],
+            name: null,
+            id: null,
+            email: null,
+            pages: [],
+            token: ''
         };
+    }
+
+    logout = () => {
+        localStorage.removeItem('accesstoken');
+        this.setState = {};
+        this.props.history.replace({ pathname: '/logout' })
+
+    }
+    page = (e) => {
+
+        this.props.history.push({
+            pathname: '/page', search: new URLSearchParams({ id: e.target.id }).toString()
+            , state: this.state
+        })
+
     }
 
     componentDidMount() {
-        const requestOptions = {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            // body: JSON.stringify({ title: 'React POST Request Example' })
-        };
-        fetch('https://jsonplaceholder.typicode.com/posts', requestOptions)
-            .then(response => response.json())
-            .then(data => this.setState({ users: data }));
+        if (this.props.location.state ? true : null) {
+            const requestOptions = {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.props.location.state.accesstoken
+                },
+            };
+
+            fetch(API, requestOptions).then(response => response.json()).then(data => {
+                this.setState({ token: data['token'] })
+            })
+                .then(async data => {
+                    await Promise.all(
+                        [fetch('https://graph.facebook.com/me?fields=name,email,id&access_token=' + this.state.token)
+                            .then(response => response.json())
+                            .then(data => this.setState({ name: data.name, id: data.id, email: data.email }))
+                        ]);
+
+                })
+                .then(async data => {
+                    await Promise.all(
+                        [fetch('https://graph.facebook.com/me/accounts?fields=name,about,category,website,access_token&access_token=' + this.state.token)
+                            .then(response => response.json())
+                            .then(data => {
+                                this.setState({ pages: data.data })
+                                console.log(data.data)
+                            }
+                            )
+
+                        ]);
+
+                })
+        } else { return <Redirect to='/' /> }
     }
+
 
     render() {
-        const { users } = this.state;
+        const user = this.props.location.state;
+        const pages = this.state.pages;
+        if (user) {
+            return (
+                <div>
+                    <Breadcrumb >
+                        <Breadcrumb.Item><p> Welcome {user.name}</p></Breadcrumb.Item>
+                        <Breadcrumb.Item><p>{user.userID}</p></Breadcrumb.Item>
+                        <Breadcrumb.Item> <Button onClick={(e) => this.logout(e)}>Logout</Button></Breadcrumb.Item>
+                    </Breadcrumb>
+                    <Container fluid>
+                        <Row>
+                            <Col xs lg="2" className='sidebar'>
+                                <Table striped hover size="lg">
+                                    <tbody>
+                                        <tr>Dashboard</tr>
 
-        return (
-            <ul>
-                {users.map(user =>
-                    <li key={user.UserId}>
-                        <h3>{user.id}</h3>
-                        <p>{user.title}</p>
-                        <p>{user.body}</p>
-                    </li>
-                )
-                }
-            </ul>
-        );
+                                        <tr>Websites</tr>
+
+                                        <tr>Listings</tr>
+
+                                        <tr>Visitors</tr>
+                                    </tbody>
+                                </Table>
+                            </Col>
+                            <Col xs lg="1"></Col>
+                            <Col xs lg="6" className='sidebar'>
+                                <Table striped hover size="lg">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Category</th>
+                                            <th>About</th>
+                                            <th>Website</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pages.map(page =>
+                                            <tr>
+                                                <td>{page.name}</td>
+                                                <td>{page.category}</td>
+                                                <td> {page.about}</td>
+                                                <td>{page.website}</td>
+                                                <td><Button onClick={(e) => this.page(e)} id={page.id} >Update</Button></td>
+                                            </tr>
+                                        )
+                                        }
+                                    </tbody>
+                                </Table>
+                            </Col>
+                        </Row>
+
+                    </Container>
+
+                </div >
+
+            );
+        }
+        else {
+            return <Redirect to='/' />
+        }
     }
+
 }
+
+
+
+
+
 

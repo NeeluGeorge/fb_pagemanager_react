@@ -1,68 +1,68 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import FacebookLogin from 'react-facebook-login';
-import Admin from './Admin'
-import { Redirect } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+const API = 'https://fbmanagertest.herokuapp.com/api/usertoken/'
 export default class Login extends Component {
-    state = {
-        isLoggedIn: false,
-        userID: "",
-        name: "",
-        email: "",
-        picture: ""
+    constructor(props) {
+        super(props);
+        this.state = {
+            isLoggedIn: false,
+            userID: "",
+            name: "",
+            email: "",
+            picture: "",
+            token: '',
+            accesstoken: null
+
+        }
     };
+    componentClicked = () => console.log("clicked");
+
+    page = (e) => {
+        this.props.history.push({
+            pathname: '/admin',
+            state: this.state
+        })
+
+    }
 
 
     responseFacebook = response => {
-        console.log(response);
-        const token = localStorage.setItem("token", response.accessToken)
         this.setState({
-            isLoggedIn: true,
             userID: response.userID,
             name: response.name,
             email: response.clientSecret,
             picture: response.picture.data.url,
             birthday: response.birthday,
-            token: localStorage.getItem("token")
+            token: response.accessToken
         });
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ "username": this.state.userID, "fb_token": this.state.token })
+        };
+        fetch(API, requestOptions)
+            .then(response => response.json())
+            .then(data => {
+                this.setState({ 'accesstoken': data['token'] })
+            }).then(this.setState({ isLoggedIn: true })).then((e) => this.page(e))
     };
 
-    componentClicked = () => console.log("clicked");
     render() {
         let fbContent;
+        fbContent = (
+            <FacebookLogin
+                appId="1107469806350895"
+                autoLoad={false}
+                fields="name,email,picture,birthday"
+                onClick={this.componentClicked}
+                callback={this.responseFacebook}
+
+            />
+        );
 
 
-        if (this.state.isLoggedIn) {
-            // fbContent = (
-            //     <div
-            //         style={{
-            //             width: "400px",
-            //             margin: "auto",
-            //             background: "#grey",
-            //             padding: "20px"
-            //         }}
-            //     >
-            //         <img src={this.state.picture} alt={this.state.name} />
-            //         <h2>Welcome {this.state.name} {this.state.token}</h2>
-            //   Email: {this.state.email}
-            //     </div>
-            // );
-            return <Redirect to="/admin" />
-        }
-        else {
-            fbContent = (
-                <FacebookLogin
-                    appId="1071661903276762"
-                    autoLoad={false}
-                    fields="name,email,picture,birthday"
-                    onClick={this.componentClicked}
-                    callback={this.responseFacebook}
-                // scope="public_profile,user_friends,user_actions.Test"
-                //  callback={this.responseFacebook}
-                />
-            );
-        }
-
-        return <div>{fbContent}</div>;
+        return <div className='login'>{fbContent}</ div>;
     }
 }
