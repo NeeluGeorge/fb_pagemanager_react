@@ -36,7 +36,12 @@ export default class Page extends Component {
                     [fetch('https://graph.facebook.com/' + id + '?about=' + this.state.about + '&website=' + this.state.website + '&access_token=' + this.state.page_token, requestOptions)
                         .then(response => {
                             response.json()
-                            if (response.status === 200) { alert('Successfully updated') } else { alert('Sorry!!!Please try later') }
+                            if (response.status === 200) {
+                                alert('Successfully updated')
+                            }
+                            else { alert('Sorry!!!Please try again') }
+                            this.props.history.goBack()
+
                         })
                     ]);
 
