@@ -63,7 +63,6 @@ export default class Admin extends Component {
                             .then(response => response.json())
                             .then(data => {
                                 this.setState({ pages: data.data })
-                                console.log(data.data)
                             }
                             )
 
